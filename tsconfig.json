@@ -13,9 +13,7 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "composite": true,
-    "noEmit": false,
-    "incremental": true
+    "noEmit": false
   },
   "exclude": ["node_modules", "dist", "build", "out"]
 }

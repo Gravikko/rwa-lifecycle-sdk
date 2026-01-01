@@ -5,4 +5,4 @@
 
 export * from './types.js';
 export { ComplianceModule } from './ComplianceModule.js';
-export * from './providers/index.js';
+// export * from './providers/index.js'; // TODO: Uncomment when providers are implemented

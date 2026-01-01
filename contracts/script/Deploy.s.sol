@@ -45,4 +45,28 @@ contract Deploy is Script {
         console.log("TEST_RWA_TOKEN_ADDRESS=");
         console.logAddress(address(testRWA));
     }
+
+    /**
+     * @notice Mint a single NFT to the deployer address
+     * @dev Used for testing the bridge module
+     */
+    function mint() external {
+        uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
+        address deployer = vm.addr(deployerPrivateKey);
+        address testRWAAddress = vm.envAddress("TEST_RWA_TOKEN_ADDRESS");
+
+        console.log("Minting NFT with account:", deployer);
+        console.log("TestRWA contract:", testRWAAddress);
+
+        vm.startBroadcast(deployerPrivateKey);
+
+        TestRWA testRWA = TestRWA(testRWAAddress);
+        uint256 tokenId = testRWA.mint(deployer);
+
+        vm.stopBroadcast();
+
+        console.log("=== Mint Summary ===");
+        console.log("Minted token ID:", tokenId);
+        console.log("Owner:", deployer);
+    }
 }
