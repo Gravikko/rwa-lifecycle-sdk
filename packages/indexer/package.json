@@ -1,7 +1,7 @@
 {
   "name": "@rwa-lifecycle/indexer",
   "version": "1.0.0",
-  "description": "Event indexing client module",
+  "description": "Event indexing module for RWA bridge transactions",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -20,11 +20,11 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "graphql": "^16.8.1",
-    "graphql-request": "^6.1.0",
-    "viem": "^2.21.0"
+    "viem": "^2.21.0",
+    "better-sqlite3": "^11.0.0"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.9",
     "tsup": "^8.0.0",
     "typescript": "^5.3.3",
     "vitest": "^1.0.0"

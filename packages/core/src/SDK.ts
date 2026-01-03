@@ -3,9 +3,9 @@ import { mainnet, sepolia } from 'viem/chains';
 import type { SDKConfig } from './types.js';
 import { mergeConfig } from './config.js';
 
-// Import modules (will be implemented in Phase 2)
+// Import modules
 // import { BridgeModule } from '@rwa-lifecycle/bridge';
-// import { GasModule } from '@rwa-lifecycle/gas';
+import { GasModule } from '@rwa-lifecycle/gas';
 // import { IndexerModule } from '@rwa-lifecycle/indexer';
 // import { ComplianceModule } from '@rwa-lifecycle/compliance';
 // import { StorageModule } from '@rwa-lifecycle/storage';
@@ -20,9 +20,9 @@ export class RWALifecycleSDK {
   private l2Client: PublicClient;
   private walletClient?: WalletClient;
 
-  // Module instances (to be initialized in Phase 2)
+  // Module instances
   // public bridge: BridgeModule;
-  // public gas: GasModule;
+  public gas: GasModule;
   // public indexer: IndexerModule;
   // public compliance: ComplianceModule;
   // public storage: StorageModule;
@@ -57,9 +57,16 @@ export class RWALifecycleSDK {
     // Store wallet client if provided
     this.walletClient = this.config.walletClient;
 
-    // Initialize modules (Phase 2)
+    // Initialize modules
     // this.bridge = new BridgeModule(this.l1Client, this.l2Client, this.config);
-    // this.gas = new GasModule(this.l2Client, this.config);
+
+    // Initialize Gas Module
+    this.gas = new GasModule({
+      l1PublicClient: this.l1Client,
+      l2PublicClient: this.l2Client,
+      network: this.config.l2ChainId === 5000 ? 'mainnet' : 'testnet',
+    });
+
     // this.indexer = new IndexerModule(this.config.indexerEndpoint);
     // this.compliance = new ComplianceModule();
     // this.storage = new StorageModule(this.config.eigenDABatcherUrl);
