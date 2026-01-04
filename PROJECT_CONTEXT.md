@@ -184,6 +184,88 @@ ComplianceModule
 
 ### ⏳ Phase 5: Storage Module
 **Status**: Not started
+**Purpose**: EigenDA integration for decentralized document storage (legal docs, certificates, audit reports for RWAs)
+
+**Planned Steps (19)**:
+
+#### Phase 5.1: Foundation (Steps 1-5)
+1. ⏳ Package setup (package.json, tsconfig.json, folder structure)
+2. ⏳ Core types & interfaces (StorageConfig, BlobMetadata, StorageProof, UploadOptions)
+3. ⏳ EigenDA client setup (gRPC Disperser or REST Proxy client)
+4. ⏳ Database schema (blobs, certificates, retrieval_keys)
+5. ⏳ Error handling (StorageError, DisperserError, RetrievalError, BlobNotFoundError)
+
+#### Phase 5.2: Core Operations (Steps 6-11)
+6. ⏳ Blob upload (disperse data to EigenDA, handle chunking for large files)
+7. ⏳ Status polling (monitor blob dispersal status with retry logic)
+8. ⏳ Certificate handling (store DA certificates, verify proofs)
+9. ⏳ Blob retrieval (fetch data using DA certificate)
+10. ⏳ Metadata storage (associate blobs with RWA tokens, store descriptions)
+11. ⏳ Blob expiry tracking (14-day TTL, expiry warnings, re-upload automation)
+
+#### Phase 5.3: Advanced Features (Steps 12-15)
+12. ⏳ File chunking (split large documents >1MB into multiple blobs)
+13. ⏳ Client-side encryption (encrypt sensitive docs before upload, AES-256-GCM)
+14. ⏳ IPFS fallback (optional permanent storage for critical documents)
+15. ⏳ Document versioning (track multiple versions of same document, diff support)
+
+#### Phase 5.4: Production Ready (Steps 16-19)
+16. ⏳ Local blob cache (cache retrieved blobs to avoid redundant fetches)
+17. ⏳ Query methods (getBlobByToken, getBlobsByAddress, searchByMetadata)
+18. ⏳ Integration with Bridge & Core SDK (auto-store transaction receipts)
+19. ⏳ Package exports, StorageModule, docs & examples
+
+**Key Technical Decisions**:
+- **EigenDA Proxy (REST API)**: Simpler than gRPC, handles payment state & polling automatically
+- **Blob Storage Duration**: 14 days on EigenDA (temporary DA, not permanent)
+- **Large Files**: Chunking strategy for files >1MB (max blob size varies by network)
+- **Encryption**: Client-side encryption for sensitive legal documents
+- **Metadata**: Store blob-to-RWA token mappings in local SQLite
+- **Use Cases**: Legal agreements, audit reports, property certificates, compliance docs
+
+**Supported Operations**:
+- Upload documents (PDF, JSON, images)
+- Retrieve documents via DA certificate
+- List all documents for an RWA token
+- Check blob availability status
+- Auto-expire and re-upload critical docs
+
+**Architecture**:
+```
+StorageModule
+├── client/         (EigenDA Proxy REST client)
+├── disperser/      (blob upload, status polling)
+├── retriever/      (blob download, verification)
+├── encryption/     (AES-256-GCM encryption/decryption)
+├── chunking/       (split/merge large files)
+├── database/       (blob metadata, certificates, keys)
+├── cache/          (local blob cache for performance)
+└── query/          (search blobs by token, address, metadata)
+```
+
+**Database Schema**:
+- `blobs`: blob_id, rwa_token_address, da_certificate, upload_date, expiry_date, file_size, file_type
+- `certificates`: certificate_hash, blob_commitment, disperser_id, batch_id, batch_header_hash
+- `retrieval_keys`: blob_id, encryption_key (encrypted), iv, metadata (JSON)
+- `blob_metadata`: blob_id, title, description, version, tags (JSON), uploader_address
+
+**EigenDA Blob Lifecycle**:
+1. Client submits blob to disperser (via REST API)
+2. Disperser encodes blob and disperses to operators
+3. Operators store blob chunks and sign attestations
+4. Disperser aggregates signatures and returns DA certificate
+5. Client stores certificate in database
+6. To retrieve: Submit certificate → disperser returns blob
+7. After 14 days: Blob expires, must re-upload if needed
+
+**API Integration**:
+- **Endpoint**: `https://disperser-holesky.eigenda.xyz` (testnet)
+- **Methods**:
+  - POST /dispersal - Upload blob, returns certificate
+  - GET /status/:requestID - Check dispersal status
+  - GET /retrieval/:certificate - Download blob
+- **Auth**: API key required for mainnet
+- **Limits**: ~10 MB/s throughput (100+ MB/s coming mid-2026)
 
 ### ⏳ Phase 6: CLI Module
 **Status**: Not started
