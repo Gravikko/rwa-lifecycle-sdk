@@ -18,7 +18,6 @@ rwa-lifecycle-sdk/
 │   ├── gas/                    # Fee estimation
 │   ├── indexer/                # Event queries
 │   ├── compliance/             # KYC/AML
-│   ├── storage/                # EigenDA
 │   └── cli/                    # Command-line tool
 ├── contracts/                   # Foundry project
 │   ├── src/TestRWA.sol        # ERC-721 RWA token
@@ -28,7 +27,7 @@ rwa-lifecycle-sdk/
 └── docs/                        # Documentation
 ```
 
-### 2. TypeScript Packages (8 total)
+### 2. TypeScript Packages (6 total)
 
 All packages have:
 - ✅ `package.json` with proper dependencies
@@ -42,7 +41,7 @@ All packages have:
 **TestRWA.sol** - Production-ready ERC-721:
 - Inherits OpenZeppelin ERC721 + Ownable
 - `mint()` - Basic minting
-- `mintWithMetadata()` - With IPFS/EigenDA URI
+- `mintWithMetadata()` - With IPFS URI
 - Custom `RWAMinted` event for indexing
 - Solidity 0.8.24
 - ✅ Compiles successfully
@@ -107,13 +106,13 @@ export class RWALifecycleSDK {
 
 | Metric | Count |
 |--------|-------|
-| **Packages** | 8 |
+| **Packages** | 6 |
 | **TypeScript Files** | 24 |
 | **Smart Contracts** | 1 |
 | **Documentation Files** | 5 |
 | **Total LOC (excluding deps)** | ~1,200 |
 | **Dependencies Configured** | 15+ |
-| **Build Targets** | 8 |
+| **Build Targets** | 6 |
 
 ---
 
@@ -146,7 +145,7 @@ export class RWALifecycleSDK {
 - Proper build tooling
 
 ### 2. Clear Architecture
-- Modular design (8 independent packages)
+- Modular design (6 independent packages)
 - Well-defined interfaces
 - Separation of concerns
 - Easy to extend

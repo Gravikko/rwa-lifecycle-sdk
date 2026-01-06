@@ -28,12 +28,15 @@ export const MANTLE_SEPOLIA_CONTRACTS = {
 // ============================================
 
 export const MANTLE_MAINNET_CONTRACTS = {
+  // L2 (Mantle) Contracts - Predeploys
   L2StandardBridge: '0x4200000000000000000000000000000000000010' as Address,
+  L2ERC721Bridge: '0x4200000000000000000000000000000000000014' as Address,
   L2CrossDomainMessenger: '0x4200000000000000000000000000000000000007' as Address,
   L2ToL1MessagePasser: '0x4200000000000000000000000000000000000016' as Address,
 
   // L1 Addresses (Ethereum Mainnet)
   L1StandardBridge: '0x95fc37a27a2f68e3a647cdc081f0a89bb47c3012' as Address,
+  L1ERC721Bridge: '0x0000000000000000000000000000000000000000' as Address, // Not deployed yet on mainnet
   L1CrossDomainMessenger: '0x676A795fe6E43C17c668de16730c3F690FEB7120' as Address,
   L2OutputOracle: '0x329664673A05952fE896328A252136c34863f6B9' as Address,
   OptimismPortal: '0x291dc3819b863e1d14f44203006020586f1e8062' as Address,

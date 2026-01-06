@@ -1,7 +1,10 @@
 import Database from 'better-sqlite3';
-import type { Database as DatabaseType } from 'better-sqlite3';
+import type { Database as DatabaseType, Statement } from 'better-sqlite3';
 import { ALL_SCHEMAS } from './schema.js';
 import { DatabaseError } from '../types.js';
+
+// Re-export Statement type for consumers
+export type { Statement } from 'better-sqlite3';
 
 export class IndexerDatabase {
   private db: DatabaseType;
@@ -30,7 +33,8 @@ export class IndexerDatabase {
     }
   }
 
-  prepare(sql: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  prepare(sql: string): Statement<any> {
     try {
       return this.db.prepare(sql);
     } catch (error) {

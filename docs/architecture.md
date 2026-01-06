@@ -21,15 +21,15 @@
 │  └────────────────────────────────────────────────────────────┘ │
 └────────────────────────┬────────────────────────────────────────┘
                          │
-          ┌──────────────┼──────────────┬──────────────┐
-          │              │              │              │
-          ▼              ▼              ▼              ▼
-┌──────────────┐ ┌──────────────┐ ┌──────────┐ ┌────────────┐
-│  @mantleio/  │ │   Mantle     │ │ SubQuery │ │  EigenDA   │
-│     sdk      │ │ Gas Oracle   │ │ Indexer  │ │ mt-batcher │
-└──────┬───────┘ └──────┬───────┘ └────┬─────┘ └─────┬──────┘
-       │                │              │             │
-       ▼                ▼              ▼             ▼
+          ┌──────────────┼──────────────┐
+          │              │              │
+          ▼              ▼              ▼
+┌──────────────┐ ┌──────────────┐ ┌──────────┐
+│  @mantleio/  │ │   Mantle     │ │ SubQuery │
+│     sdk      │ │ Gas Oracle   │ │ Indexer  │
+└──────┬───────┘ └──────┬───────┘ └────┬─────┘
+       │                │              │
+       ▼                ▼              ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                    BLOCKCHAIN LAYER                         │
 │  ┌──────────────────────┐      ┌──────────────────────┐    │
@@ -100,31 +100,22 @@ INITIATE (L2) → PROVE (L1) → FINALIZE (L1)
 
 ### 5. Compliance Module
 
-**Purpose**: Pluggable KYC/AML verification
+**Purpose**: On-chain compliance verification for RWA tokens
 
 **Architecture**:
-- Provider interface (`IComplianceProvider`)
-- Built-in providers (Whitelist, On-chain Registry)
-- Custom provider support
+- ERC3643 standard support (T-REX protocol)
+- Plugin system (`ICompliancePlugin`)
+- Token standard detection
+- Transfer simulation
 
 **Key Features**:
-- Pre-transfer validation
-- Multiple provider support
-- Extensible architecture
-
-### 6. Storage Module
-
-**Purpose**: Archive metadata to EigenDA
-
-**Architecture**:
-- Blob encoding/decoding
-- mt-batcher API integration
-- On-chain reference storage
-
-**Key Features**:
-- Cheap immutable storage
-- Legal document archival
-- Compliance metadata
+- Native ERC3643 compliance checking
+- Identity Registry integration
+- Custom compliance plugins (Blacklist, Whitelist examples)
+- Auto-detect token standard
+- Pre-transfer simulation to prevent failures
+- On-chain only (no off-chain APIs)
+- Stateless operation (no database)
 
 ## Data Flow
 
@@ -134,7 +125,11 @@ INITIATE (L2) → PROVE (L1) → FINALIZE (L1)
 1. User calls sdk.withdrawAndFinalize(tokenId)
    │
    ├─► Check compliance
-   │   └─► ComplianceModule.verify(recipient)
+   │   └─► ComplianceModule.checkCompliance(token, from, to, amount)
+   │       ├─► Detect token standard (ERC3643/ERC20/ERC721)
+   │       ├─► Check registered plugin (if any)
+   │       ├─► Call ERC3643 canTransfer() (if applicable)
+   │       └─► Simulate transfer (if requested)
    │
    ├─► Estimate cost
    │   └─► GasModule.estimateBridgeCost()
@@ -148,11 +143,8 @@ INITIATE (L2) → PROVE (L1) → FINALIZE (L1)
    ├─► Prove withdrawal (L1 tx)
    │   └─► BridgeModule.prove()
    │
-   ├─► Finalize withdrawal (L1 tx)
-   │   └─► BridgeModule.finalize()
-   │
-   └─► Archive event
-       └─► StorageModule.archiveEvent()
+   └─► Finalize withdrawal (L1 tx)
+       └─► BridgeModule.finalize()
 ```
 
 ## Technology Stack
@@ -173,7 +165,6 @@ INITIATE (L2) → PROVE (L1) → FINALIZE (L1)
 - PostgreSQL (data storage)
 
 ### Infrastructure
-- EigenDA (data availability)
 - Mantle L2 (execution layer)
 - Ethereum L1 (settlement layer)
 
@@ -204,10 +195,11 @@ INITIATE (L2) → PROVE (L1) → FINALIZE (L1)
    - Fallback mechanisms
    - User confirmation for high costs
 
-4. **Compliance Provider Trust**
-   - Verify provider integrity
-   - Multi-provider support
-   - Audit trail logging
+4. **Compliance Verification**
+   - Trust on-chain data only
+   - Validate ERC3643 interface implementations
+   - Test custom plugins thoroughly
+   - Handle detection failures gracefully
 
 ## Performance Optimization
 

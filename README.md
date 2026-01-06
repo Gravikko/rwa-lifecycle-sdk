@@ -98,13 +98,13 @@ if (!hasBalance) {
 | **@rwa-lifecycle/bridge** | Execute L1 ↔ L2 token transfers | ✅ Complete |
 | **@rwa-lifecycle/gas** | Estimate bridge costs | ✅ Complete |
 | **@rwa-lifecycle/indexer** | Track transaction history | ✅ Complete |
+| **@rwa-lifecycle/compliance** | On-chain compliance verification (ERC3643 & plugins) | ✅ Complete |
 
 ### Optional Modules
 
 | Module | Purpose | Status |
 |--------|---------|--------|
 | **@rwa-lifecycle/cli** | Command-line interface (no coding) | ⏳ Planned |
-| **@rwa-lifecycle/compliance** | KYC/AML verification hooks | ⏳ Deferred |
 
 ## Individual Module Usage
 
@@ -191,6 +191,46 @@ console.log(`Can finalize: ${status.canFinalize}`);
 indexer.stop();
 ```
 
+### Compliance Module
+
+```typescript
+import { ComplianceModule } from '@rwa-lifecycle/compliance';
+import { BlacklistPlugin } from '@rwa-lifecycle/compliance/plugins';
+
+const compliance = new ComplianceModule({
+  publicClient: l2PublicClient,
+  network: 'testnet',
+});
+
+// Check ERC3643 token compliance
+const result = await compliance.checkCompliance(
+  tokenAddress,
+  fromAddress,
+  toAddress,
+  amount
+);
+
+if (!result.compliant) {
+  throw new Error(`Transfer blocked: ${result.reason}`);
+}
+
+// Register custom plugin for non-standard tokens
+const blacklistPlugin = new BlacklistPlugin();
+compliance.registerPlugin(customTokenAddress, blacklistPlugin);
+
+// Check with plugin
+const customResult = await compliance.checkCompliance(
+  customTokenAddress,
+  fromAddress,
+  toAddress,
+  amount
+);
+
+// Detect token standard
+const standard = await compliance.detectStandard(tokenAddress);
+console.log(`Token standard: ${standard}`); // ERC3643, ERC20, ERC721, or UNKNOWN
+```
+
 ## Project Structure
 
 ```
@@ -240,6 +280,15 @@ rwa-lifecycle-sdk/
 - ✅ Withdrawal status tracking
 - ✅ User/token filtering
 - ✅ Pagination support
+
+### Compliance Verification
+- ✅ ERC3643 standard support (T-REX protocol)
+- ✅ Identity Registry integration
+- ✅ Custom compliance plugins
+- ✅ Token standard auto-detection
+- ✅ Transfer simulation (prevent failed transactions)
+- ✅ On-chain only (no off-chain APIs)
+- ✅ Stateless operation
 
 ## Development
 
@@ -337,10 +386,13 @@ Key security considerations:
 - Double-check gas estimates before executing
 
 ### RWA Compliance
-If your RWA token requires KYC/AML:
-- Handle compliance through your token's smart contract
-- Use ERC3643 standard for compliant tokens
-- This SDK focuses on bridging, not compliance enforcement
+The SDK includes a Compliance Module that supports:
+- **ERC3643 tokens**: Automatic compliance checking via `canTransfer()`
+- **Custom tokens**: Extensible plugin system for any compliance logic
+- **Pre-bridge validation**: Check compliance before executing transfers
+- **On-chain only**: All checks read directly from blockchain
+
+For maximum security, use ERC3643-compliant tokens (T-REX standard)
 
 ## Documentation
 
@@ -360,7 +412,7 @@ A: Mantle L2 offers ~95% lower gas fees than Ethereum L1
 A: ~12 hours (3 phases: initiate → prove → finalize)
 
 **Q: Does this handle KYC/AML?**
-A: No, compliance is handled by your token's smart contract (e.g., ERC3643)
+A: Yes! The Compliance Module checks ERC3643 tokens and supports custom compliance via plugins
 
 **Q: Can I use this with any ERC20/ERC721?**
 A: Yes, as long as the token implements the standard Mantle bridge interface
@@ -383,7 +435,6 @@ MIT License - see [LICENSE](./LICENSE)
 
 - Built for the **Mantle Hackathon**
 - Powered by [Foundry](https://getfoundry.sh/), [Viem](https://viem.sh/), [Turbo](https://turbo.build/)
-- Mantle uses EigenDA for data availability
 
 ---
 

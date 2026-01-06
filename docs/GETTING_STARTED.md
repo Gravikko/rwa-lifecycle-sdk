@@ -128,26 +128,44 @@ assets.forEach(asset => {
 });
 ```
 
-### 5. Compliance Check (Phase 4)
+### 5. Compliance Check
 
 ```typescript
-import { WhitelistProvider } from '@rwa-lifecycle/compliance';
+import { ComplianceModule } from '@rwa-lifecycle/compliance';
+import { BlacklistPlugin } from '@rwa-lifecycle/compliance/plugins';
 
-// Initialize compliance with whitelist
-const whitelist = new Set([
-  '0x1234...', // Approved addresses
-  '0x5678...',
-]);
+// Initialize compliance module
+const compliance = new ComplianceModule({
+  publicClient: sdk.getL2Client(),
+  network: 'testnet',
+});
 
-const complianceProvider = new WhitelistProvider(whitelist);
+// Check ERC3643 token compliance
+const result = await compliance.checkCompliance(
+  tokenAddress,
+  fromAddress,
+  toAddress,
+  amount
+);
 
-// Check if address is compliant
-const result = await complianceProvider.verify(recipientAddress);
-if (result.approved) {
-  console.log('Address is KYC verified!');
-} else {
-  console.log('Compliance check failed:', result.reason);
+if (!result.compliant) {
+  throw new Error(`Transfer blocked: ${result.reason}`);
 }
+
+console.log(`Token standard: ${result.tokenStandard}`);
+console.log(`Transfer allowed: ${result.compliant}`);
+
+// For custom tokens, register a plugin
+const blacklistPlugin = new BlacklistPlugin();
+compliance.registerPlugin(customTokenAddress, blacklistPlugin);
+
+// Check again with plugin
+const customResult = await compliance.checkCompliance(
+  customTokenAddress,
+  fromAddress,
+  toAddress,
+  amount
+);
 ```
 
 ## Project Structure

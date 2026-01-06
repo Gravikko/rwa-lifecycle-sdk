@@ -1,21 +1,45 @@
-import { createPublicClient, createWalletClient, http, type PublicClient, type WalletClient } from 'viem';
+import { createPublicClient, http, type PublicClient, type WalletClient } from 'viem';
 import { mainnet, sepolia } from 'viem/chains';
 import type { SDKConfig } from './types.js';
-import { mergeConfig } from './config.js';
+import { mergeConfig, validateConfig, TESTNET_DEFAULTS, MAINNET_DEFAULTS } from './config.js';
 
 // Import modules
 // import { BridgeModule } from '@rwa-lifecycle/bridge';
 import { GasModule } from '@rwa-lifecycle/gas';
 // import { IndexerModule } from '@rwa-lifecycle/indexer';
 // import { ComplianceModule } from '@rwa-lifecycle/compliance';
-// import { StorageModule } from '@rwa-lifecycle/storage';
+
+/**
+ * Internal resolved configuration with all required fields
+ */
+interface ResolvedConfig extends SDKConfig {
+  network: 'mainnet' | 'testnet';
+  l1ChainId: number;
+  l2ChainId: number;
+}
 
 /**
  * Main RWA Lifecycle SDK class
  * Orchestrates all modules for managing tokenized real-world assets on Mantle
+ *
+ * @example
+ * ```typescript
+ * const sdk = new RWALifecycleSDK({
+ *   l1RpcUrl: 'https://eth-sepolia.public.blastapi.io',
+ *   l2RpcUrl: 'https://rpc.sepolia.mantle.xyz',
+ * });
+ *
+ * // Estimate gas for deposit
+ * const cost = await sdk.gas.estimateDepositERC20Cost({
+ *   from: '0x...',
+ *   l1TokenAddress: '0x...',
+ *   l2TokenAddress: '0x...',
+ *   amount: BigInt(100e18),
+ * });
+ * ```
  */
 export class RWALifecycleSDK {
-  private config: SDKConfig;
+  private config: ResolvedConfig;
   private l1Client: PublicClient;
   private l2Client: PublicClient;
   private walletClient?: WalletClient;
@@ -25,14 +49,30 @@ export class RWALifecycleSDK {
   public gas: GasModule;
   // public indexer: IndexerModule;
   // public compliance: ComplianceModule;
-  // public storage: StorageModule;
 
   /**
    * Initialize the RWA Lifecycle SDK
-   * @param config SDK configuration
+   * @param config SDK configuration (only RPC URLs required, everything else has defaults)
+   * @throws Error if configuration is invalid
    */
   constructor(config: Partial<SDKConfig>) {
-    this.config = mergeConfig(config);
+    // Merge with defaults
+    const mergedConfig = mergeConfig(config);
+
+    // Validate configuration
+    const errors = validateConfig(mergedConfig);
+    if (errors.length > 0) {
+      throw new Error(`Invalid SDK configuration: ${errors.join(', ')}`);
+    }
+
+    // Resolve configuration with guaranteed values
+    const defaults = mergedConfig.network === 'mainnet' ? MAINNET_DEFAULTS : TESTNET_DEFAULTS;
+    this.config = {
+      ...mergedConfig,
+      network: mergedConfig.network ?? 'testnet',
+      l1ChainId: mergedConfig.l1ChainId ?? defaults.l1ChainId,
+      l2ChainId: mergedConfig.l2ChainId ?? defaults.l2ChainId,
+    } as ResolvedConfig;
 
     // Initialize L1 public client
     this.l1Client = createPublicClient({
@@ -40,11 +80,11 @@ export class RWALifecycleSDK {
       transport: http(this.config.l1RpcUrl),
     });
 
-    // Initialize L2 public client
+    // Initialize L2 public client (custom chain definition for Mantle)
     this.l2Client = createPublicClient({
       chain: {
         id: this.config.l2ChainId,
-        name: this.config.l2ChainId === 5000 ? 'Mantle' : 'Mantle Sepolia',
+        name: this.config.network === 'mainnet' ? 'Mantle' : 'Mantle Sepolia',
         nativeCurrency: { name: 'MNT', symbol: 'MNT', decimals: 18 },
         rpcUrls: {
           default: { http: [this.config.l2RpcUrl] },
@@ -57,19 +97,17 @@ export class RWALifecycleSDK {
     // Store wallet client if provided
     this.walletClient = this.config.walletClient;
 
-    // Initialize modules
-    // this.bridge = new BridgeModule(this.l1Client, this.l2Client, this.config);
-
     // Initialize Gas Module
     this.gas = new GasModule({
       l1PublicClient: this.l1Client,
       l2PublicClient: this.l2Client,
-      network: this.config.l2ChainId === 5000 ? 'mainnet' : 'testnet',
+      network: this.config.network,
     });
 
-    // this.indexer = new IndexerModule(this.config.indexerEndpoint);
-    // this.compliance = new ComplianceModule();
-    // this.storage = new StorageModule(this.config.eigenDABatcherUrl);
+    // TODO: Phase 5.2 - Initialize other modules
+    // this.bridge = new BridgeModule({ ... });
+    // this.indexer = new IndexerModule({ ... });
+    // this.compliance = new ComplianceModule({ ... });
   }
 
   /**

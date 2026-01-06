@@ -24,7 +24,6 @@
     "@rwa-lifecycle/gas": "workspace:*",
     "@rwa-lifecycle/indexer": "workspace:*",
     "@rwa-lifecycle/compliance": "workspace:*",
-    "@rwa-lifecycle/storage": "workspace:*",
     "viem": "^2.21.0",
     "dotenv": "^16.3.1"
   },
