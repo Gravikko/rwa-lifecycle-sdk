@@ -33,8 +33,7 @@ export class IndexerDatabase {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  prepare(sql: string): Statement<any> {
+  prepare(sql: string): Statement<unknown[]> {
     try {
       return this.db.prepare(sql);
     } catch (error) {

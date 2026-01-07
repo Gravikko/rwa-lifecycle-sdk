@@ -142,7 +142,7 @@ export class BlockTracker {
           blockToRevert,
           currentState.lastSyncedTimestamp
         );
-      })();
+      });
     } catch (error) {
       throw new DatabaseError(`Failed to handle reorg for ${chain}`, error);
     }
