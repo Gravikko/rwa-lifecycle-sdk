@@ -44,49 +44,46 @@ pnpm add @rwa-lifecycle/core
 
 ```typescript
 import { RWALifecycleSDK } from '@rwa-lifecycle/core';
-import { createWalletClient, http } from 'viem';
-import { privateKeyToAccount } from 'viem/accounts';
-import { sepolia } from 'viem/chains';
 
-// Initialize SDK
+// Initialize SDK (read-only mode)
 const sdk = new RWALifecycleSDK({
   l1RpcUrl: 'https://eth-sepolia.public.blastapi.io',
   l2RpcUrl: 'https://rpc.sepolia.mantle.xyz',
-  walletClient: createWalletClient({
-    account: privateKeyToAccount('0x...'),
-    chain: sepolia,
-    transport: http(),
-  }),
+  privateKey: '0x...', // optional: for bridging
 });
 
-// 1. Check how much it will cost
-const cost = await sdk.gas.estimateDepositERC20Cost(
-  '0x...', // token address
-  BigInt(100 * 10**18) // amount
-);
+// 1. Estimate gas cost
+const estimate = await sdk.estimateAndBridge({
+  tokenAddress: '0x...',
+  amount: BigInt(100 * 10**18),
+  direction: 'deposit',
+  dryRun: true, // just estimate, don't execute
+});
 
-console.log(`Total cost: ${cost.totalCostETH} ETH`);
-console.log(`L2 execution: ${cost.l2ExecutionFee} ETH`);
-console.log(`L1 data fee: ${cost.l1DataFee} ETH`);
+console.log(`Total cost: ${estimate.estimate.formattedInETH} ETH`);
+console.log(`L2 gas: ${estimate.estimate.l2ExecutionFee}`);
+console.log(`L1 data: ${estimate.estimate.l1DataFee}`);
 
-// 2. Check if user has enough balance
-const hasBalance = await sdk.gas.checkSufficientBalance(
-  userAddress,
-  cost
-);
+// 2. Bridge with compliance check (recommended)
+const result = await sdk.bridgeWithCompliance({
+  tokenAddress: '0x...',
+  amount: BigInt(100 * 10**18),
+  direction: 'deposit',
+});
 
-if (!hasBalance) {
-  throw new Error('Insufficient balance');
+if (!result.compliant) {
+  console.error(`Transfer blocked: ${result.complianceReason}`);
+} else {
+  console.log(`Bridged! TX: ${result.txHash}`);
 }
 
-// 3. Execute the bridge (deposit L1 → L2)
-// await sdk.bridge.depositERC20(tokenAddress, amount);
+// 3. Track your transactions
+const myTransactions = await sdk.getMyTransactions({ type: 'deposit' });
+console.log(`Your deposits: ${myTransactions.items.length}`);
 
-// 4. Track transaction history
-// const history = await sdk.indexer.getTransactions({
-//   user: userAddress,
-//   type: 'deposit',
-// });
+// 4. Track withdrawal status
+const status = await sdk.trackWithdrawal('0x...');
+console.log(`Withdrawal phase: ${status?.phase}`); // initiated, proven, finalized
 ```
 
 ## Modules
@@ -104,7 +101,8 @@ if (!hasBalance) {
 
 | Module | Purpose | Status |
 |--------|---------|--------|
-| **@rwa-lifecycle/cli** | Command-line interface (no coding) | ⏳ Planned |
+| **@rwa-lifecycle/cli** | Command-line interface (no coding) | ⏳ Phase 6 |
+| **@rwa-lifecycle/relayer** | Automated withdrawal finalization | ⏳ Phase 7 |
 
 ## Individual Module Usage
 
@@ -271,7 +269,7 @@ rwa-lifecycle-sdk/
 - ✅ ERC721 deposit (L1 → L2)
 - ✅ ERC20 withdrawal (L2 → L1, 3 phases)
 - ✅ ERC721 withdrawal (L2 → L1, 3 phases)
-- ⏳ Automated withdrawal finalization (planned)
+- ⏳ Automated withdrawal finalization (Phase 7 - Relayer Service)
 
 ### Event Indexing
 - ✅ Real-time event syncing (12-second intervals)
