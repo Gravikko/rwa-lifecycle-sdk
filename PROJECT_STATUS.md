@@ -1,8 +1,8 @@
 # RWA Lifecycle SDK - Project Status
 
-**Last Updated**: January 9, 2026
-**Progress**: 80% Complete (5/7 Phases)
-**Current Phase**: Phase 6 - CLI Module (Next)
+**Last Updated**: January 10, 2026
+**Progress**: 83% Complete (5.5/7 Phases)
+**Current Phase**: Phase 6.2 - Gas Estimation Commands (Next)
 
 ---
 
@@ -188,7 +188,38 @@
 
 ---
 
-## ⏳ Next Steps: Phase 6 - CLI Module
+## 🔄 Phase 6: CLI Module (IN PROGRESS - 6.1 Complete)
+
+**Status**: 6.1 Complete, continuing with 6.2
+
+### Phase 6.1: CLI Foundation & Setup - ✅ COMPLETE
+
+#### Achievements
+- ✅ CLI package structure with ESM support
+- ✅ Configuration file management (.env, .rwa-config.json)
+- ✅ Colored logging with chalk
+- ✅ Error handling with actionable suggestions
+- ✅ Output formatting utilities
+- ✅ Binary setup (`rwa` and `rwa-cli` commands)
+
+#### Commands Implemented
+- `rwa init` - Initialize configuration files
+- `rwa config get [key]` - Show configuration
+- `rwa config set <key> <value>` - Update configuration
+- `rwa config validate` - Validate configuration
+- `rwa config path` - Show config file paths
+- `rwa status` - Show SDK status and readiness
+- Global flags: `--json`, `--debug`, `--quiet`, `--help`, `--version`
+
+#### Files Created
+- `packages/cli/src/index.ts` - Main CLI entry point
+- `packages/cli/src/config.ts` - Config file management
+- `packages/cli/src/logger.ts` - Colored logging
+- `packages/cli/src/utils/formatter.ts` - Output formatting
+- `packages/cli/src/utils/errorHandler.ts` - Error handling
+
+### Phase 6.2-6.6: Pending
+See `PHASE_6_PLAN.md` for detailed implementation plan.
 
 ---
 
@@ -202,7 +233,7 @@
 - ✅ **Phase 5**: Core Module Integration (Convenience methods, integration tests, 54 tests)
 
 ### In Progress / Planned
-- ⏳ **Phase 6**: CLI Module (Command-line interface)
+- 🔄 **Phase 6**: CLI Module (6.1 Complete - Foundation & Config)
 - ⏳ **Phase 7**: Relayer Service (Auto-finalization)
 
 ---
@@ -220,7 +251,7 @@
 ### Stretch Goals
 - ✅ Compliance module (ERC3643 & plugins, 53 tests)
 - ✅ Core module integration (convenience methods, 54 tests)
-- ⏳ CLI tool functional
+- 🔄 CLI tool functional (6.1/6 phases complete)
 - ⏳ Relayer service (auto-finalization)
 - ✅ Multiple example scripts
 - ⏳ Demo video

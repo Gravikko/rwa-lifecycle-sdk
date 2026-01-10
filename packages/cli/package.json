@@ -2,16 +2,26 @@
   "name": "@rwa-lifecycle/cli",
   "version": "1.0.0",
   "description": "Command-line interface for RWA Lifecycle SDK",
+  "type": "module",
   "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "bin": {
+    "rwa": "./dist/index.js",
     "rwa-cli": "./dist/index.js"
   },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "scripts": {
-    "build": "tsup src/index.ts --format cjs --dts",
-    "dev": "tsup src/index.ts --format cjs --dts --watch",
+    "build": "tsup src/index.ts --format esm --dts --clean",
+    "dev": "tsup src/index.ts --format esm --dts --watch",
     "test": "vitest",
     "lint": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "cli": "node ./dist/index.js"
   },
   "dependencies": {
     "@rwa-lifecycle/core": "workspace:*",
@@ -22,9 +32,21 @@
     "dotenv": "^16.3.1"
   },
   "devDependencies": {
+    "@types/node": "^20.10.0",
     "tsup": "^8.0.0",
     "typescript": "^5.3.3",
     "vitest": "^1.0.0",
     "@types/inquirer": "^9.0.7"
-  }
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "rwa",
+    "cli",
+    "mantle",
+    "bridge",
+    "ethereum",
+    "l2"
+  ]
 }
