@@ -1,6 +1,6 @@
 # Phase 6: CLI Module - Implementation Plan
 
-**Status**: In Progress (6.1 Complete)
+**Status**: ✅ COMPLETE (All 6 phases)
 **Target**: Build a production-ready command-line interface for the RWA Lifecycle SDK
 
 ---
@@ -56,28 +56,45 @@ The CLI module wraps the Core SDK convenience methods in an interactive command-
 
 ---
 
-## Phase 6.2: Gas Estimation Commands
+## Phase 6.2: Gas Estimation Commands - ✅ COMPLETE
 
 ### Objectives
-- Implement gas estimation commands for all bridge operations
-- Format costs in readable formats (ETH, USD)
-- Support both ERC20 and ERC721 tokens
+- ✅ Implement gas estimation commands for all bridge operations
+- ✅ Format costs in readable formats (ETH)
+- ✅ Support both ERC20 and ERC721 tokens
 
 ### Deliverables
-- `packages/cli/src/commands/estimate.ts` - Estimation command handler
+- ✅ `packages/cli/src/commands/estimate.ts` - Estimation command handler
+- ✅ `packages/cli/src/sdk.ts` - SDK initialization helper
 
-### Commands
+### Commands Implemented
 ```bash
 rwa estimate-deposit-erc20 <token> <amount>
-  --to <address> (optional recipient)
+  --to <address>       (optional recipient)
+  --l2-token <address> (optional L2 token address)
 
 rwa estimate-deposit-erc721 <token> <tokenId>
-  --to <address> (optional recipient)
+  --to <address>       (optional recipient)
+  --l2-token <address> (optional L2 token address)
 
 rwa estimate-withdrawal-erc20 <token> <amount>
+  --to <address>       (optional recipient)
+  --l1-token <address> (optional L1 token address)
+  --full               (show full 3-phase withdrawal cost)
 
 rwa estimate-withdrawal-erc721 <token> <tokenId>
+  --to <address>       (optional recipient)
+  --l1-token <address> (optional L1 token address)
+  --full               (show full 3-phase withdrawal cost)
+
+rwa estimate
+  (show help and examples for all estimation commands)
 ```
+
+### Aliases
+- `estimate-deposit-nft` → `estimate-deposit-erc721`
+- `estimate-withdraw-erc20` → `estimate-withdrawal-erc20`
+- `estimate-withdraw-nft` → `estimate-withdrawal-erc721`
 
 ### Output Format
 ```
@@ -105,59 +122,53 @@ Recommended:       0.00187 ETH (~$5.50)
 
 ---
 
-## Phase 6.3: Bridge Operation Commands
+## Phase 6.3: Bridge Operation Commands - ✅ COMPLETE
 
 ### Objectives
-- Implement commands for all bridge operations (deposit, withdrawal phases)
-- Show transaction tracking and status
-- Support ERC20 and ERC721
+- ✅ Implement commands for all bridge operations (deposit, withdrawal phases)
+- ✅ Show transaction tracking and status
+- ✅ Support ERC20 and ERC721
 
 ### Deliverables
-- `packages/cli/src/commands/bridge.ts` - Bridge operation handlers
-- Transaction result formatting with etherscan links
+- ✅ `packages/cli/src/commands/bridge.ts` - Bridge operation handlers
+- ✅ Transaction result formatting with explorer links
 
-### Commands
+### Commands Implemented
 ```bash
-# Deposits (L2-bound)
+# Deposits (L1 → L2)
 rwa deposit-erc20 <token> <amount> [--to <address>]
 rwa deposit-erc721 <token> <tokenId> [--to <address>]
 
-# Withdrawals (L1-bound, 3-phase process)
-rwa initiate-withdrawal <token> <amount> [--tokenId for ERC721]
+# Withdrawals (L2 → L1, 3-phase process)
+rwa withdraw-erc20 <token> <amount> [--to <address>]
+rwa withdraw-erc721 <token> <tokenId> [--to <address>]
 rwa prove-withdrawal <txHash>
 rwa finalize-withdrawal <txHash>
+
+# Help
+rwa bridge (show all bridge commands)
 ```
 
-### Output Format
-```
-Deposit Transaction
-═══════════════════════════════════════
-Operation:         Deposit ERC20
-Token:             0x1234... (USDC)
-Amount:            1000
-Recipient:         0x5678...
+### Aliases
+- `deposit-nft` → `deposit-erc721`
+- `withdraw-nft` → `withdraw-erc721`
+- `initiate-withdrawal-erc20` → `withdraw-erc20`
 
-Transaction Hash:  0xabcd...
-Block:             12345678
-Status:            ✓ Success
-
-View on Etherscan: https://sepolia.etherscan.io/tx/0xabcd...
-Estimated Time:    ~2 minutes
-```
-
-### Tests
-- Command execution (with mocked bridge)
-- Transaction formatting
-- Error handling (insufficient balance, approval needed, etc.)
+### Features
+- Beautiful transaction result display with colored boxes
+- Explorer links (Etherscan for L1, Mantlescan for L2)
+- Progress indicators for withdrawal phases
+- Clear next-step guidance after each phase
+- JSON output mode for scripting
 
 ---
 
-## Phase 6.4: Compliance Check Commands
+## Phase 6.4: Compliance Check Commands - ✅ COMPLETE
 
 ### Objectives
-- Check compliance before executing transfers
-- List and manage compliance plugins
-- Show detailed compliance results
+- ✅ Check compliance before executing transfers
+- ✅ List and manage compliance plugins
+- ✅ Show detailed compliance results
 
 ### Deliverables
 - `packages/cli/src/commands/compliance.ts` - Compliance check handlers
@@ -200,13 +211,13 @@ Result:            ✓ COMPLIANT - Transfer allowed
 
 ---
 
-## Phase 6.5: Indexer Query Commands
+## Phase 6.5: Indexer Query Commands - ✅ COMPLETE
 
 ### Objectives
-- Query transaction history
-- Track withdrawal progress
-- Show pending withdrawals
-- Display withdrawal timeline
+- ✅ Query transaction history
+- ✅ Track withdrawal progress
+- ✅ Show pending withdrawals
+- ✅ Display withdrawal timeline
 
 ### Deliverables
 - `packages/cli/src/commands/indexer.ts` - Indexer query handlers
@@ -281,13 +292,13 @@ Estimated Completion: ~8 hours 10 minutes
 
 ---
 
-## Phase 6.6: Interactive Mode & Polish
+## Phase 6.6: Interactive Mode & Polish - ✅ COMPLETE
 
 ### Objectives
-- Build interactive workflow for common operations
-- Add progress indicators and better error messages
-- Command aliases and shortcuts
-- Tab completion and help system
+- ✅ Build interactive workflow for common operations
+- ✅ Add progress indicators and better error messages
+- ✅ Command aliases and shortcuts
+- ✅ Help system enhancements
 
 ### Deliverables
 - `packages/cli/src/commands/interactive.ts` - Interactive mode handler

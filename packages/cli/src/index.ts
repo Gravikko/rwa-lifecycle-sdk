@@ -25,6 +25,10 @@ import {
 import { withErrorHandler, CLIError } from './utils/errorHandler.js';
 import { formatJson } from './utils/formatter.js';
 import { registerEstimateCommands } from './commands/estimate.js';
+import { registerBridgeCommands } from './commands/bridge.js';
+import { registerComplianceCommands } from './commands/compliance.js';
+import { registerIndexerCommands } from './commands/indexer.js';
+import { registerInteractiveCommands } from './commands/interactive.js';
 
 // Package version (loaded from package.json in production)
 const VERSION = '1.0.0';
@@ -409,6 +413,18 @@ program
 // Gas estimation commands (Phase 6.2)
 registerEstimateCommands(program);
 
+// Bridge operation commands (Phase 6.3)
+registerBridgeCommands(program);
+
+// Compliance check commands (Phase 6.4)
+registerComplianceCommands(program);
+
+// Indexer query commands (Phase 6.5)
+registerIndexerCommands(program);
+
+// Interactive mode commands (Phase 6.6)
+registerInteractiveCommands(program);
+
 // ============================================
 // HELP ENHANCEMENTS
 // ============================================
@@ -420,23 +436,49 @@ ${chalk.bold('Examples:')}
   ${chalk.gray('# Initialize configuration')}
   $ rwa init
 
-  ${chalk.gray('# Show all configuration')}
-  $ rwa config get
+  ${chalk.gray('# Start interactive mode (guided prompts)')}
+  $ rwa interactive
 
   ${chalk.gray('# Estimate gas for deposit')}
   $ rwa estimate-deposit-erc20 0x1234... 1000000000000000000
 
-  ${chalk.gray('# Estimate gas for withdrawal (full 3-phase cost)')}
-  $ rwa estimate-withdrawal-erc20 0x1234... 1000000000000000000 --full
+  ${chalk.gray('# Deposit ERC20 tokens to L2')}
+  $ rwa deposit-erc20 0x1234... 1000000000000000000
 
-  ${chalk.gray('# Check SDK status')}
-  $ rwa status
+  ${chalk.gray('# Initiate withdrawal from L2')}
+  $ rwa withdraw-erc20 0x1234... 1000000000000000000
 
-${chalk.bold('More commands coming in Phase 6.3-6.6:')}
-  ${chalk.gray('deposit-*')}     Bridge deposit commands
-  ${chalk.gray('withdraw-*')}    Bridge withdrawal commands
-  ${chalk.gray('compliance')}    Compliance check commands
-  ${chalk.gray('indexer')}       Transaction query commands
+  ${chalk.gray('# Complete withdrawal (3-phase process)')}
+  $ rwa prove-withdrawal 0xabcd...
+  $ rwa finalize-withdrawal 0xabcd...
+
+  ${chalk.gray('# Check compliance before transfer')}
+  $ rwa check-compliance 0x1234... 0xaaaa... 0xbbbb... 1000
+
+  ${chalk.gray('# List your transactions')}
+  $ rwa txs --type deposit
+
+  ${chalk.gray('# Track withdrawal progress')}
+  $ rwa track 0xabcd...
+
+  ${chalk.gray('# List pending withdrawals')}
+  $ rwa pending
+
+${chalk.bold('Command Groups:')}
+  ${chalk.cyan('bridge')}        Bridge operation commands (deposit, withdraw)
+  ${chalk.cyan('compliance')}    Compliance check commands
+  ${chalk.cyan('indexer')}       Transaction query commands
+  ${chalk.cyan('estimate')}      Gas estimation commands
+  ${chalk.cyan('interactive')}   Interactive mode (i, wizard)
+
+${chalk.bold('Quick Aliases:')}
+  ${chalk.gray('txs')}           list-transactions
+  ${chalk.gray('track')}         track-withdrawal
+  ${chalk.gray('pending')}       list-pending-withdrawals
+  ${chalk.gray('timeline')}      get-withdrawal-timeline
+  ${chalk.gray('sync')}          indexer-sync
+  ${chalk.gray('stats')}         indexer-stats
+  ${chalk.gray('i')}             interactive mode
 
 ${chalk.bold('Documentation:')}
   ${chalk.blue('https://github.com/your-org/rwa-lifecycle-sdk')}

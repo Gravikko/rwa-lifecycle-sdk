@@ -69,8 +69,23 @@ export function initSDK(options?: {
     logger.debug('SDK initialized successfully');
     return sdkInstance;
   } catch (error) {
+    const message = (error as Error).message;
+
+    // Check for common issues
+    if (message.includes('database') || message.includes('sqlite') || message.includes('bindings')) {
+      throw new CLIError(
+        'Failed to initialize SDK: Database module error',
+        [
+          'The SQLite native module may need to be rebuilt for your Node.js version',
+          'Run: pnpm rebuild better-sqlite3',
+          'Or try: rm -rf node_modules && pnpm install',
+          'Node version: ' + process.version,
+        ]
+      );
+    }
+
     throw new CLIError(
-      `Failed to initialize SDK: ${(error as Error).message}`,
+      `Failed to initialize SDK: ${message}`,
       [
         'Check your RPC URLs are correct',
         'Run: rwa config validate',

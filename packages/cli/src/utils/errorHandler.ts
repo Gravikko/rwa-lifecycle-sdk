@@ -69,6 +69,15 @@ interface ParsedError {
  * Parse common error messages and provide suggestions
  */
 export function parseError(error: unknown): ParsedError {
+  // If it's already a CLIError with suggestions, use those
+  if (error instanceof CLIError) {
+    return {
+      message: error.message,
+      suggestions: error.suggestions,
+      code: error.code,
+    };
+  }
+
   const errorMessage = error instanceof Error ? error.message : String(error);
 
   // Configuration errors
