@@ -284,6 +284,7 @@ describe('TransactionQuery', () => {
         ...createMockEvents(2, 'l2').map((e, i) => ({
           ...e,
           id: `withdraw-${i}`,
+          transactionHash: `0xwithdraw${i}`,
           eventType: 'WithdrawalInitiated' as const,
         })),
       ];

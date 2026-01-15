@@ -1,300 +1,24 @@
 # RWA Lifecycle SDK
 
-> TypeScript SDK for managing Real-World Asset tokens on Mantle L2
+> TypeScript SDK for bridging Real-World Asset tokens between Ethereum L1 and Mantle L2
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Built with Foundry](https://img.shields.io/badge/Built%20with-Foundry-FFDB1C.svg)](https://getfoundry.sh/)
+## Overview
 
-## What Does This SDK Do?
+Complete SDK for bridging tokenized real-world assets (RWAs) to Mantle L2. Supports gas estimation, compliance verification, transaction tracking, and automated withdrawal finalization.
 
-This SDK helps you **bridge tokenized real-world assets (RWAs) between Ethereum L1 and Mantle L2**.
+**Features:**
+- Bridge ERC20 & ERC721 tokens (L1 ↔ L2)
+- Accurate gas estimation (L2 execution + L1 data fees)
+- SQLite event indexing & transaction history
+- ERC3643 compliance verification + custom plugins
+- CLI with 40+ commands
+- Automated relayer for withdrawal finalization
 
-If you have an RWA token (property deed, bond, commodity) on Ethereum and want to move it to Mantle L2 for faster/cheaper trading, this SDK automates the entire process.
-
-## Prerequisites
-
-Before using this SDK, you need:
-
-- ✅ An RWA token (ERC20 or ERC721) on Ethereum L1
-- ✅ Node.js >= 18
-- ✅ ETH for L1 gas fees
-- ✅ MNT for L2 gas fees
-- ✅ RPC URLs for both L1 (Ethereum) and L2 (Mantle)
-
-## The Workflow
-
-```
-1. Check Cost    → How much will bridging cost?
-2. Bridge Token  → Move token from L1 to L2 (or L2 to L1)
-3. Track History → See all your bridge transactions
-4. (Optional) Check Compliance → Verify KYC/AML if required
-```
-
-## Quick Start
-
-### Installation
+## Installation
 
 ```bash
-npm install @rwa-lifecycle/core
-# or
-pnpm add @rwa-lifecycle/core
-```
-
-### Basic Example
-
-```typescript
-import { RWALifecycleSDK } from '@rwa-lifecycle/core';
-
-// Initialize SDK (read-only mode)
-const sdk = new RWALifecycleSDK({
-  l1RpcUrl: 'https://eth-sepolia.public.blastapi.io',
-  l2RpcUrl: 'https://rpc.sepolia.mantle.xyz',
-  privateKey: '0x...', // optional: for bridging
-});
-
-// 1. Estimate gas cost
-const estimate = await sdk.estimateAndBridge({
-  tokenAddress: '0x...',
-  amount: BigInt(100 * 10**18),
-  direction: 'deposit',
-  dryRun: true, // just estimate, don't execute
-});
-
-console.log(`Total cost: ${estimate.estimate.formattedInETH} ETH`);
-console.log(`L2 gas: ${estimate.estimate.l2ExecutionFee}`);
-console.log(`L1 data: ${estimate.estimate.l1DataFee}`);
-
-// 2. Bridge with compliance check (recommended)
-const result = await sdk.bridgeWithCompliance({
-  tokenAddress: '0x...',
-  amount: BigInt(100 * 10**18),
-  direction: 'deposit',
-});
-
-if (!result.compliant) {
-  console.error(`Transfer blocked: ${result.complianceReason}`);
-} else {
-  console.log(`Bridged! TX: ${result.txHash}`);
-}
-
-// 3. Track your transactions
-const myTransactions = await sdk.getMyTransactions({ type: 'deposit' });
-console.log(`Your deposits: ${myTransactions.items.length}`);
-
-// 4. Track withdrawal status
-const status = await sdk.trackWithdrawal('0x...');
-console.log(`Withdrawal phase: ${status?.phase}`); // initiated, proven, finalized
-```
-
-## Modules
-
-### Core Modules (Required)
-
-| Module | Purpose | Status |
-|--------|---------|--------|
-| **@rwa-lifecycle/bridge** | Execute L1 ↔ L2 token transfers | ✅ Complete |
-| **@rwa-lifecycle/gas** | Estimate bridge costs | ✅ Complete |
-| **@rwa-lifecycle/indexer** | Track transaction history | ✅ Complete |
-| **@rwa-lifecycle/compliance** | On-chain compliance verification (ERC3643 & plugins) | ✅ Complete |
-
-### Optional Modules
-
-| Module | Purpose | Status |
-|--------|---------|--------|
-| **@rwa-lifecycle/cli** | Command-line interface (no coding) | ⏳ Phase 6 |
-| **@rwa-lifecycle/relayer** | Automated withdrawal finalization | ⏳ Phase 7 |
-
-## Individual Module Usage
-
-### Gas Module
-
-```typescript
-import { GasModule } from '@rwa-lifecycle/gas';
-import { createPublicClient, http } from 'viem';
-import { sepolia } from 'viem/chains';
-
-const gasModule = new GasModule({
-  l1PublicClient: createPublicClient({
-    chain: sepolia,
-    transport: http('https://eth-sepolia.public.blastapi.io'),
-  }),
-  l2PublicClient: createPublicClient({
-    chain: { id: 5003, name: 'Mantle Sepolia', ... },
-    transport: http('https://rpc.sepolia.mantle.xyz'),
-  }),
-});
-
-// Estimate deposit cost
-const depositCost = await gasModule.estimateDepositERC20Cost(
-  tokenAddress,
-  amount
-);
-
-// Estimate complete withdrawal (all 3 phases)
-const withdrawalCost = await gasModule.estimateCompleteWithdrawalCost(
-  tokenAddress,
-  amount
-);
-```
-
-### Bridge Module
-
-```typescript
-import { BridgeModule } from '@rwa-lifecycle/bridge';
-
-const bridge = new BridgeModule({ l1Client, l2Client });
-
-// Deposit ERC20 (L1 → L2)
-await bridge.depositERC20(tokenAddress, amount);
-
-// Deposit ERC721/NFT (L1 → L2)
-await bridge.depositNFT(tokenAddress, tokenId);
-
-// Withdraw ERC20 (L2 → L1) - 3 phases
-await bridge.withdrawERC20Initiate(tokenAddress, amount);
-// Wait ~12 hours for ZK proof...
-await bridge.withdrawERC20Prove(withdrawalHash);
-// Wait for finalization window...
-await bridge.withdrawERC20Finalize(withdrawalHash);
-```
-
-### Indexer Module
-
-```typescript
-import { IndexerModule } from '@rwa-lifecycle/indexer';
-
-const indexer = new IndexerModule({
-  l1RpcUrl: 'https://eth-sepolia.public.blastapi.io',
-  l2RpcUrl: 'https://rpc.sepolia.mantle.xyz',
-  l1BridgeAddress: '0x...',
-  l2BridgeAddress: '0x...',
-});
-
-// Start syncing events
-await indexer.start();
-
-// Query transactions
-const deposits = await indexer.getDeposits({
-  user: userAddress,
-  limit: 10,
-});
-
-// Track withdrawal status (3 phases)
-const status = await indexer.getWithdrawalStatus(withdrawalId);
-console.log(`Phase: ${status.phase}`); // initiated, proven, finalized
-console.log(`Can prove: ${status.canProve}`);
-console.log(`Can finalize: ${status.canFinalize}`);
-
-// Stop syncing
-indexer.stop();
-```
-
-### Compliance Module
-
-```typescript
-import { ComplianceModule } from '@rwa-lifecycle/compliance';
-import { BlacklistPlugin } from '@rwa-lifecycle/compliance/plugins';
-
-const compliance = new ComplianceModule({
-  publicClient: l2PublicClient,
-  network: 'testnet',
-});
-
-// Check ERC3643 token compliance
-const result = await compliance.checkCompliance(
-  tokenAddress,
-  fromAddress,
-  toAddress,
-  amount
-);
-
-if (!result.compliant) {
-  throw new Error(`Transfer blocked: ${result.reason}`);
-}
-
-// Register custom plugin for non-standard tokens
-const blacklistPlugin = new BlacklistPlugin();
-compliance.registerPlugin(customTokenAddress, blacklistPlugin);
-
-// Check with plugin
-const customResult = await compliance.checkCompliance(
-  customTokenAddress,
-  fromAddress,
-  toAddress,
-  amount
-);
-
-// Detect token standard
-const standard = await compliance.detectStandard(tokenAddress);
-console.log(`Token standard: ${standard}`); // ERC3643, ERC20, ERC721, or UNKNOWN
-```
-
-## Project Structure
-
-```
-rwa-lifecycle-sdk/
-├── packages/
-│   ├── core/          # Main SDK orchestrator
-│   ├── bridge/        # L1 ↔ L2 bridging (ERC20 & ERC721)
-│   ├── gas/           # Gas cost estimation
-│   ├── indexer/       # Event indexing & transaction history
-│   ├── compliance/    # KYC/AML hooks (optional)
-│   └── cli/           # Command-line tool (planned)
-├── contracts/         # Foundry smart contracts
-│   └── src/
-│       └── TestRWA.sol # Example ERC-721 RWA token
-└── examples/          # Integration examples
-```
-
-## Networks Supported
-
-| Network | Chain ID | RPC URL |
-|---------|----------|---------|
-| Ethereum Sepolia (L1) | 11155111 | https://eth-sepolia.public.blastapi.io |
-| Mantle Sepolia (L2) | 5003 | https://rpc.sepolia.mantle.xyz |
-| Ethereum Mainnet (L1) | 1 | https://eth.public-rpc.com |
-| Mantle Mainnet (L2) | 5000 | https://rpc.mantle.xyz |
-
-## Key Features
-
-### Gas Estimation
-- ✅ Accurate L2 + L1 data fee calculation
-- ✅ Mantle Gas Oracle integration
-- ✅ 3-phase withdrawal cost aggregation
-- ✅ Balance checking utilities
-- ✅ Safety buffers (configurable)
-
-### Bridge Operations
-- ✅ ERC20 deposit (L1 → L2)
-- ✅ ERC721 deposit (L1 → L2)
-- ✅ ERC20 withdrawal (L2 → L1, 3 phases)
-- ✅ ERC721 withdrawal (L2 → L1, 3 phases)
-- ⏳ Automated withdrawal finalization (Phase 7 - Relayer Service)
-
-### Event Indexing
-- ✅ Real-time event syncing (12-second intervals)
-- ✅ SQLite local database
-- ✅ Transaction history queries
-- ✅ Withdrawal status tracking
-- ✅ User/token filtering
-- ✅ Pagination support
-
-### Compliance Verification
-- ✅ ERC3643 standard support (T-REX protocol)
-- ✅ Identity Registry integration
-- ✅ Custom compliance plugins
-- ✅ Token standard auto-detection
-- ✅ Transfer simulation (prevent failed transactions)
-- ✅ On-chain only (no off-chain APIs)
-- ✅ Stateless operation
-
-## Development
-
-### Setup
-
-```bash
-# Clone repository
-git clone https://github.com/yourusername/rwa-lifecycle-sdk.git
+# Clone the repository
+git clone https://github.com/your-username/rwa-lifecycle-sdk.git
 cd rwa-lifecycle-sdk
 
 # Install dependencies
@@ -307,133 +31,144 @@ pnpm build
 pnpm test
 ```
 
-### Environment Configuration
+**Note:**
+- **Tests** (`pnpm test`) are fully mocked - no `.env` needed
+- **Examples** execute real transactions - requires `.env` with `PRIVATE_KEY` and testnet funds
+- **SDK read-only operations** (gas estimation, status checks) work without `.env`
 
-```bash
-cp .env.example .env
-# Edit .env with your RPC URLs and private keys
+## Quick Start
+
+### Basic Usage
+
+```typescript
+import { RWALifecycleSDK } from '@rwa-lifecycle/core';
+
+// Initialize SDK
+const sdk = new RWALifecycleSDK({
+  l1RpcUrl: 'https://eth-sepolia.public.blastapi.io',
+  l2RpcUrl: 'https://rpc.sepolia.mantle.xyz',
+  privateKey: '0x...', // optional for read-only
+});
+
+// Estimate gas cost
+const estimate = await sdk.estimateAndBridge({
+  tokenAddress: '0x...',
+  amount: BigInt(100 * 10**18),
+  direction: 'deposit',
+  dryRun: true,
+});
+console.log(`Cost: ${estimate.estimate.formattedInETH} ETH`);
+
+// Bridge with compliance check
+const result = await sdk.bridgeWithCompliance({
+  tokenAddress: '0x...',
+  amount: BigInt(100 * 10**18),
+  direction: 'deposit',
+});
+
+// Track transactions
+const txs = await sdk.getMyTransactions({ type: 'deposit' });
 ```
 
-### Build Smart Contracts
+### CLI Usage
 
 ```bash
-cd contracts
-forge build
-forge test
+# Run CLI from the monorepo
+pnpm --filter @rwa-lifecycle/cli start
+
+# Or use the built CLI directly
+cd packages/cli
+pnpm start
+
+# Initialize configuration
+pnpm start init
+
+# Estimate costs
+pnpm start estimate-deposit-erc20 0x... 1000
+
+# Bridge tokens
+pnpm start deposit-erc20 0x... 1000
+
+# Track withdrawal (3-phase process)
+pnpm start track-withdrawal 0x...
+
+# Interactive mode
+pnpm start interactive
 ```
 
-## Use Cases
+## Packages
 
-### 1. Property Tokenization Platform
-Bridge tokenized property deeds from Ethereum to Mantle for trading.
+| Package | Purpose |
+|---------|---------|
+| **@rwa-lifecycle/core** | Main SDK orchestrator with convenience methods |
+| **@rwa-lifecycle/bridge** | L1 ↔ L2 token bridging (ERC20 & ERC721) |
+| **@rwa-lifecycle/gas** | Gas estimation (L2 execution + L1 data fees) |
+| **@rwa-lifecycle/indexer** | SQLite event indexing & transaction history |
+| **@rwa-lifecycle/compliance** | ERC3643 compliance + custom plugins |
+| **@rwa-lifecycle/cli** | Command-line interface (40+ commands) |
+| **@rwa-lifecycle/relayer** | Automated withdrawal finalization service |
 
-### 2. Bond Trading Platform
-Move tokenized bonds to Mantle L2 for lower gas costs.
-
-### 3. RWA Marketplace
-Enable users to trade RWA tokens on L2 with automatic bridging.
-
-### 4. Compliance Dashboard
-Track all bridge transactions for audit and compliance purposes.
-
-## Understanding Mantle's Bridge
+## Mantle Bridge Explained
 
 ### Deposit (L1 → L2)
 1. Lock tokens on L1 bridge contract
 2. Tokens minted on L2 (~10 minutes)
-3. User can now trade on Mantle
 
 ### Withdrawal (L2 → L1)
-1. **Initiate**: Burn tokens on L2 (~instant)
+1. **Initiate**: Burn tokens on L2
 2. **Prove**: Submit ZK proof to L1 (~12 hours wait)
-3. **Finalize**: Unlock tokens on L1 (~instant after prove)
+3. **Finalize**: Unlock tokens on L1
 
-**Total withdrawal time**: ~12 hours (Mantle uses ZK proofs, not optimistic 7-day challenge)
+**Total time**: ~12 hours
 
-## Gas Costs on Mantle
+## Security
 
-Mantle charges **two types of fees**:
+⚠️ **Hackathon project - use at your own risk**
 
-1. **L2 Execution Fee**: Cost to execute transaction on Mantle
-2. **L1 Data Fee**: Cost to publish transaction data to Ethereum
-
-**Example**:
-```
-Deposit 100 ERC20 tokens:
-├─ L2 execution: ~$0.02
-├─ L1 data fee: ~$0.50
-└─ Total: ~$0.52
-```
-
-Our Gas Module calculates both automatically.
-
-## Important Notes
-
-### Withdrawal Time
-- Mantle uses **ZK proofs** (via OP Succinct)
-- Withdrawal time: **~12 hours** (not 7 days like optimistic rollups)
-- You must call all 3 phases: initiate → prove → finalize
-
-### Security
-⚠️ This is a hackathon project - use at your own risk.
-
-Key security considerations:
-- Store private keys securely (use hardware wallets in production)
+- Test on Sepolia testnet first
 - Verify contract addresses before bridging
-- Test on testnet first
-- Double-check gas estimates before executing
+- Use hardware wallets for production
+- ERC3643 tokens recommended for compliance
 
-### RWA Compliance
-The SDK includes a Compliance Module that supports:
-- **ERC3643 tokens**: Automatic compliance checking via `canTransfer()`
-- **Custom tokens**: Extensible plugin system for any compliance logic
-- **Pre-bridge validation**: Check compliance before executing transfers
-- **On-chain only**: All checks read directly from blockchain
+## Examples
 
-For maximum security, use ERC3643-compliant tokens (T-REX standard)
+See the [`/examples`](./examples/) directory for complete working examples:
 
-## Documentation
-
-- [Gas Module README](./packages/gas/README.md) - Detailed gas estimation docs
-- [Indexer Module README](./packages/indexer/README.md) - Event indexing guide
-- [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md) - Technical implementation details
-
-## FAQ
-
-**Q: What's an RWA token?**
-A: A blockchain token representing ownership of a real-world asset (property, bond, commodity, etc.)
-
-**Q: Why bridge to Mantle?**
-A: Mantle L2 offers ~95% lower gas fees than Ethereum L1
-
-**Q: How long does withdrawal take?**
-A: ~12 hours (3 phases: initiate → prove → finalize)
-
-**Q: Does this handle KYC/AML?**
-A: Yes! The Compliance Module checks ERC3643 tokens and supports custom compliance via plugins
-
-**Q: Can I use this with any ERC20/ERC721?**
-A: Yes, as long as the token implements the standard Mantle bridge interface
-
-## Contributing
-
-This is a hackathon project. Contributions welcome!
+| Example | Description |
+|---------|-------------|
+| `01-complete-deposit-workflow.ts` | Full L1→L2 deposit with gas estimation & compliance |
+| `02-complete-withdrawal-workflow.ts` | 3-phase L2→L1 withdrawal process |
+| `03-monitor-transactions.ts` | Query transactions & track withdrawals |
+| `04-batch-operations.ts` | Batch processing multiple tokens |
 
 ```bash
-git checkout -b feature/amazing-feature
-pnpm test
-# Submit PR
+cd examples
+pnpm install
+
+# Set up environment (requires testnet funds)
+cp ../.env.example .env
+# Edit .env with your PRIVATE_KEY (wallet with Sepolia ETH)
+
+# Run an example (executes real transactions on testnet)
+pnpm example:deposit
+pnpm example:withdraw
+pnpm example:monitor
+pnpm example:batch
 ```
+
+## Networks
+
+| Network | Chain ID | RPC |
+|---------|----------|-----|
+| Ethereum Sepolia | 11155111 | https://eth-sepolia.public.blastapi.io |
+| Mantle Sepolia | 5003 | https://rpc.sepolia.mantle.xyz |
+| Ethereum Mainnet | 1 | https://eth.public-rpc.com |
+| Mantle Mainnet | 5000 | https://rpc.mantle.xyz |
 
 ## License
 
-MIT License - see [LICENSE](./LICENSE)
-
-## Acknowledgments
-
-- Built for the **Mantle Hackathon**
-- Powered by [Foundry](https://getfoundry.sh/), [Viem](https://viem.sh/), [Turbo](https://turbo.build/)
+MIT - Built for Mantle Global Hackathon 2025
 
 ---
 
-**Built for the Mantle ecosystem 🚀**
+**Powered by** [Viem](https://viem.sh/) • [Turbo](https://turbo.build/)

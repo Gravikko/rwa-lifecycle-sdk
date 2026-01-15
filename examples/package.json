@@ -5,12 +5,16 @@
   "description": "Example scripts for RWA Lifecycle SDK",
   "type": "module",
   "scripts": {
-    "dev": "echo 'Run specific examples with: tsx <example-file>.ts'",
+    "example:deposit": "tsx 01-complete-deposit-workflow.ts",
+    "example:withdraw": "tsx 02-complete-withdrawal-workflow.ts",
+    "example:monitor": "tsx 03-monitor-transactions.ts",
+    "example:batch": "tsx 04-batch-operations.ts",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
     "@rwa-lifecycle/core": "workspace:*",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "viem": "^2.21.0"
   },
   "devDependencies": {
     "tsx": "^4.7.0",

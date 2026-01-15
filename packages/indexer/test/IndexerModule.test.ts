@@ -13,6 +13,7 @@ describe('IndexerModule Integration', () => {
   afterEach(() => {
     if (indexer) {
       indexer.close();
+      indexer = undefined as any;
     }
     cleanupTestDb(dbPath);
   });
@@ -73,7 +74,7 @@ describe('IndexerModule Integration', () => {
   });
 
   it('should close cleanly', () => {
-    indexer = new IndexerModule({
+    const localIndexer = new IndexerModule({
       l1RpcUrl: 'https://rpc.sepolia.eth.gateway.fm',
       l2RpcUrl: 'https://rpc.sepolia.mantle.xyz',
       l1BridgeAddress: '0x21F308067241B2028503c07bd7cB3751FFab0Fb2',
@@ -81,6 +82,6 @@ describe('IndexerModule Integration', () => {
       databasePath: dbPath,
     });
 
-    expect(() => indexer.close()).not.toThrow();
+    expect(() => localIndexer.close()).not.toThrow();
   });
 });

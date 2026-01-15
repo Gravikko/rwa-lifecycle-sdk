@@ -59,9 +59,26 @@ export class StateManager {
   constructor(stateFilePath: string, logger: Logger) {
     this.filePath = stateFilePath;
     this.logger = logger.child({ module: 'StateManager' });
-    this.state = { ...DEFAULT_STATE };
+    this.state = this.createFreshState();
     this.provenSet = new Set();
     this.finalizedSet = new Set();
+  }
+
+  /**
+   * Create a fresh state object (deep copy)
+   */
+  private createFreshState(): RelayerState {
+    return {
+      version: 1,
+      provenWithdrawals: [],
+      finalizedWithdrawals: [],
+      stats: {
+        totalProven: 0,
+        totalFinalized: 0,
+        totalFailed: 0,
+      },
+      lastUpdated: new Date().toISOString(),
+    };
   }
 
   /**
@@ -98,7 +115,7 @@ export class StateManager {
       }
     } catch (error) {
       this.logger.error({ error }, 'Failed to load state, starting fresh');
-      this.state = { ...DEFAULT_STATE };
+      this.state = this.createFreshState();
       this.provenSet = new Set();
       this.finalizedSet = new Set();
     }
@@ -222,7 +239,7 @@ export class StateManager {
    * Clear all state (for testing)
    */
   clear(): void {
-    this.state = { ...DEFAULT_STATE };
+    this.state = this.createFreshState();
     this.provenSet.clear();
     this.finalizedSet.clear();
   }
